@@ -315,7 +315,7 @@ function updateTurnDisplay() {
   }
 }
 
-// ===== MODAL =====
+// ===== MODAL & TOAST =====
 function showModal(title,body,actions) {
   let overlay=$('#modal-overlay');
   if(!overlay){
@@ -330,6 +330,18 @@ function showModal(title,body,actions) {
 function hideModal() {
   const o=$('#modal-overlay');
   if(o) o.classList.remove('active');
+}
+
+function showToast(type, amount, msg) {
+  const toast = document.createElement('div');
+  toast.className = `rent-toast ${type}`;
+  toast.innerHTML = `
+    <div class="toast-icon">${type === 'pay' ? '💸' : '💰'}</div>
+    <div class="toast-amount">₩${fmt(amount)}</div>
+    <div class="toast-msg">${msg}</div>
+  `;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2500);
 }
 
 // ===== SCREENS =====
@@ -602,7 +614,7 @@ async function handleProperty(p, idx, sq) {
       if(rentAmt>100000){p.cards.splice(freeCard,1);log(`${p.name}이(가) 통행료 면제권을 사용했습니다!`);}
       else payRent(p,idx,prop,rentAmt);
     } else {
-      payRent(p,idx,prop,rentAmt);
+      payRent(p,idx,prop,rentAmt, sq.name);
     }
     // Columbia teleport
     if(sq.type==='columbia'||sq.id===35){
@@ -627,10 +639,17 @@ function doBuild(p,idx,id){
   updateOwners(); renderPlayerCards(); renderPropPanel();
 }
 
-function payRent(p,idx,prop,amt){
+function payRent(p,idx,prop,amt, propName=''){
   const owner=G.players[prop.owner];
   p.money-=amt; owner.money+=amt;
   log(`💸 ${p.name}이(가) ${owner.name}에게 통행료 ₩${fmt(amt)}을(를) 지불했습니다.`);
+  
+  if (!p.isBot) {
+     showToast('pay', amt, `${owner.name}의 ${propName} 통행료 지불`);
+  } else if (!owner.isBot) {
+     showToast('receive', amt, `${p.name}가 내 ${propName}에 방문함`);
+  }
+
   checkBankruptcy(p,idx);
   renderPlayerCards();
 }

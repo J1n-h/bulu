@@ -421,20 +421,26 @@ html, body {
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
   padding: 10px 12px;
-  max-height: 180px;
+  max-height: 130px;
   overflow-y: auto;
+  flex-shrink: 0;
 }
 .prop-panel::-webkit-scrollbar { width: 4px; }
 .prop-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+.prop-panel::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
 .prop-panel h4 {
-  font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px;
+  font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 6px;
   font-weight: 600; letter-spacing: 1px;
+  position: sticky; top: -10px; z-index: 1;
+  background: rgba(30,30,58,0.95); padding: 4px 0;
+  margin: -10px -12px 6px -12px; padding: 6px 12px;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 .prop-panel-player {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 .prop-panel-player-name {
-  font-size: 0.75rem; font-weight: 700; margin-bottom: 4px;
+  font-size: 0.7rem; font-weight: 700; margin-bottom: 3px;
   display: flex; align-items: center; gap: 6px;
 }
 .prop-panel-player-name .pdot {
@@ -445,9 +451,50 @@ html, body {
 }
 .prop-tag {
   padding: 1px 6px; border-radius: 4px;
-  font-size: 0.6rem; font-weight: 600;
+  font-size: 0.55rem; font-weight: 600;
   border: 1px solid rgba(255,255,255,0.1);
   color: #fff;
+}
+
+/* Rent Toast Notification */
+.rent-toast {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  z-index: 300;
+  padding: 24px 40px;
+  border-radius: var(--radius-lg);
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  animation: toastPop 2.5s ease forwards;
+}
+.rent-toast.pay {
+  background: linear-gradient(145deg, rgba(255,64,129,0.25), rgba(200,30,80,0.2));
+  border: 2px solid rgba(255, 64, 129, 0.5);
+  box-shadow: 0 0 40px rgba(255, 64, 129, 0.3);
+}
+.rent-toast.receive {
+  background: linear-gradient(145deg, rgba(105,240,174,0.25), rgba(50,180,100,0.2));
+  border: 2px solid rgba(105, 240, 174, 0.5);
+  box-shadow: 0 0 40px rgba(105, 240, 174, 0.3);
+}
+.rent-toast .toast-icon { font-size: 2.2rem; margin-bottom: 8px; }
+.rent-toast .toast-amount {
+  font-size: 1.6rem; font-weight: 800;
+  margin-bottom: 4px;
+}
+.rent-toast.pay .toast-amount { color: var(--accent-pink); }
+.rent-toast.receive .toast-amount { color: var(--accent-green); }
+.rent-toast .toast-msg {
+  font-size: 0.85rem; color: var(--text-secondary);
+}
+@keyframes toastPop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  15% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+  25% { transform: translate(-50%, -50%) scale(1); }
+  75% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -60%) scale(0.95); }
 }
 .prop-tag .bldg { font-size: 0.5rem; margin-left: 2px; }
 

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="부루마불 - 웹 기반 보드게임. 봇과 함께 즐기는 부동산 보드게임!">
+  <title>부루마불 | Blue Marble Board Game</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎲</text></svg>">
+</head>
+<body>
+
+  <!-- ===== Lobby Screen ===== -->
+  <div id="lobby-screen" class="screen">
+    <h1 class="lobby-title">부루마불</h1>
+    <p class="lobby-subtitle">Blue Marble Board Game</p>
+    <button class="btn btn-primary" id="play-btn">🎮 플레이</button>
+    <div class="play-options" id="play-options" style="display:none">
+      <button class="btn btn-primary" id="bot-play-btn">🤖 봇 플레이</button>
+      <button class="btn btn-disabled" id="multi-play-btn" disabled>👥 멀티플레이 (미구현)</button>
+    </div>
+  </div>
+
+  <!-- ===== Setup Screen ===== -->
+  <div id="setup-screen" class="screen hidden">
+    <div class="setup-box">
+      <h2>🤖 봇 수 선택</h2>
+      <div class="bot-options">
+        <div class="bot-option" data-count="1">1</div>
+        <div class="bot-option selected" data-count="2">2</div>
+        <div class="bot-option" data-count="3">3</div>
+      </div>
+      <button class="btn btn-primary" id="start-game-btn">🚀 게임 시작</button>
+    </div>
+  </div>
+
+  <!-- ===== Game Screen ===== -->
+  <div id="game-screen" class="screen hidden">
+    <button class="btn btn-danger" id="exit-btn" onclick="exitGame()">🚪 나가기</button>
+    <div id="board-wrapper">
+      <div id="board"></div>
+    </div>
+    <div id="side-panel"></div>
+  </div>
+
+  <!-- ===== Game Over Screen ===== -->
+  <div id="gameover-screen" class="screen hidden">
+    <div class="gameover-box">
+      <h1>🏆 게임 종료!</h1>
+      <div class="winner-name" id="winner-name">-</div>
+      <div class="winner-money" id="winner-money">-</div>
+      <div class="gameover-actions">
+        <button class="btn btn-primary" id="replay-btn">🔄 다시하기</button>
+        <button class="btn" id="end-btn">🏠 끝내기</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

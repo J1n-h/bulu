@@ -210,10 +210,12 @@ function renderSidePanel() {
       <button class="btn btn-primary" id="roll-btn" onclick="onRollDice()">🎲 주사위 굴리기</button>
     </div>
     <div id="players-list"></div>
+    <div id="prop-panel" class="prop-panel"><h4>🏠 소유 부동산</h4><div id="prop-panel-content"></div></div>
     <div id="game-log"><div style="color:var(--text-dim);text-align:center;padding:8px;">게임 로그</div></div>
   `;
   renderDice(1,1);
   renderPlayerCards();
+  renderPropPanel();
 }
 
 function renderPlayerCards() {
@@ -272,7 +274,29 @@ function log(msg) {
   d.className='log-entry';
   d.innerHTML=msg;
   el.appendChild(d);
-  el.scrollTop=el.scrollHeight;
+  // Auto-scroll only if user isn't manually scrolling up
+  const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+  if(isNearBottom) el.scrollTop = el.scrollHeight;
+}
+
+function renderPropPanel() {
+  const el=$('#prop-panel-content');
+  if(!el) return;
+  el.innerHTML='';
+  const bldgIcons = ['','🏡','🏢','🏨'];
+  G.players.forEach((p,idx)=>{
+    const props = Object.entries(G.properties).filter(([k,v])=>v.owner===idx);
+    if(props.length===0) return;
+    const div = document.createElement('div');
+    div.className='prop-panel-player';
+    let tags = props.map(([k,v])=>{
+      const sq=BOARD[parseInt(k)];
+      const gc=sq.group?GROUP_COLORS[sq.group]:'#666';
+      return `<span class="prop-tag" style="background:${gc}33;border-color:${gc}66">${sq.name}${v.level>0?'<span class="bldg">'+bldgIcons[v.level]+'</span>':''}</span>`;
+    }).join('');
+    div.innerHTML=`<div class="prop-panel-player-name"><span class="pdot" style="background:${PLAYER_COLORS[idx]}"></span>${p.name}</div><div class="prop-list">${tags}</div>`;
+    el.appendChild(div);
+  });
 }
 
 function updateTurnDisplay() {
@@ -328,9 +352,9 @@ function startGame(numBots) {
     animating:false, turnActive:false
   };
   // Create players
-  G.players.push({name:'나',isBot:false,money:1500000,pos:0,cards:[],skipTurns:0,bankrupt:false,jailTurns:0});
+  G.players.push({name:'나',isBot:false,money:500000,pos:0,cards:[],skipTurns:0,bankrupt:false,jailTurns:0});
   for(let i=0;i<numBots;i++){
-    G.players.push({name:`봇 ${i+1}`,isBot:true,money:1500000,pos:0,cards:[],skipTurns:0,bankrupt:false,jailTurns:0});
+    G.players.push({name:`봇 ${i+1}`,isBot:true,money:500000,pos:0,cards:[],skipTurns:0,bankrupt:false,jailTurns:0});
   }
   // Random turn order
   G.turnOrder = G.players.map((_,i)=>i);
@@ -363,7 +387,7 @@ async function startTurn() {
   if(p.skipTurns>0){
     log(`⛔ ${p.name}은(는) ${p.skipTurns}턴 정지 상태입니다.`);
     p.skipTurns--;
-    await wait(1000);
+    await wait(1500);
     G.turnActive=false;
     nextTurn();
     return;
@@ -373,7 +397,7 @@ async function startTurn() {
     return;
   }
   if(p.isBot){
-    await wait(800);
+    await wait(1500);
     await doBotRoll(idx);
   }
   // Human waits for button click
@@ -429,17 +453,18 @@ window.jailWait=async function(){
 async function rollDiceAnim() {
   G.rolling=true;
   const d0=$('#die0'), d1=$('#die1');
-  if(d0) d0.classList.add('rolling');
-  if(d1) d1.classList.add('rolling');
-  for(let i=0;i<10;i++){
+  if(d0){ d0.classList.remove('landed'); d0.classList.add('rolling'); }
+  if(d1){ d1.classList.remove('landed'); d1.classList.add('rolling'); }
+  for(let i=0;i<15;i++){
     renderDice(rand(1,6),rand(1,6));
-    await wait(80);
+    await wait(60 + i*8);
   }
   const v1=rand(1,6), v2=rand(1,6);
   G.diceValues=[v1,v2];
   renderDice(v1,v2);
-  if(d0) d0.classList.remove('rolling');
-  if(d1) d1.classList.remove('rolling');
+  if(d0){ d0.classList.remove('rolling'); d0.classList.add('landed'); }
+  if(d1){ d1.classList.remove('rolling'); d1.classList.add('landed'); }
+  await wait(400);
   G.rolling=false;
   return [v1,v2];
 }
@@ -480,7 +505,7 @@ async function doRoll(idx) {
   // Check double for extra turn
   if(isDouble && !p.bankrupt && p.jailTurns===0 && G.phase==='playing'){
     log(`🔄 더블! ${p.name}이(가) 한 번 더 굴립니다.`);
-    if(p.isBot){ await wait(800); await doBotRoll(idx); }
+    if(p.isBot){ await wait(1500); await doBotRoll(idx); }
     else { G.turnActive=true; updateTurnDisplay(); }
     return;
   }
@@ -498,10 +523,10 @@ async function movePlayer(p, idx, steps) {
       log(`💵 ${p.name}이(가) 출발을 지나 20만원을 받았습니다.`);
     }
     updateTokens();
-    await wait(150);
+    await wait(250);
   }
   G.animating=false;
-  renderPlayerCards();
+  renderPlayerCards(); renderPropPanel();
   log(`📍 ${p.name}이(가) <b>${BOARD[p.pos].name}</b>에 도착했습니다.`);
 }
 
@@ -525,7 +550,7 @@ async function handleLanding(p, idx) {
     case 'start': break;
     default: break;
   }
-  renderPlayerCards(); updateOwners(); updateTokens();
+  renderPlayerCards(); updateOwners(); updateTokens(); renderPropPanel();
 }
 
 // ===== PROPERTY =====
@@ -591,7 +616,7 @@ function doBuy(p,idx,id){
   p.money-=sq.price;
   G.properties[id]={owner:idx,level:0};
   log(`🏠 ${p.name}이(가) ${sq.name}을(를) ₩${fmt(sq.price)}에 구매했습니다!`);
-  updateOwners(); renderPlayerCards();
+  updateOwners(); renderPlayerCards(); renderPropPanel();
 }
 
 function doBuild(p,idx,id){
@@ -599,7 +624,7 @@ function doBuild(p,idx,id){
   p.money-=sq.bc; prop.level++;
   const lvlNames=['별장','빌딩','호텔'];
   log(`🏗️ ${p.name}이(가) ${sq.name}에 ${lvlNames[prop.level-1]}을(를) 건설했습니다!`);
-  updateOwners(); renderPlayerCards();
+  updateOwners(); renderPlayerCards(); renderPropPanel();
 }
 
 function payRent(p,idx,prop,amt){
@@ -611,7 +636,7 @@ function payRent(p,idx,prop,amt){
 }
 
 function botBuyDecision(p,idx,sq){
-  if(p.money>sq.price*1.5){ doBuy(p,idx,sq.id); }
+  if(p.money>sq.price*1.3){ doBuy(p,idx,sq.id); }
   else { log(`${p.name}이(가) 구매를 패스했습니다.`); }
 }
 function botBuildDecision(p,idx,sq,prop){
@@ -659,7 +684,7 @@ async function handleGoldenKey(p, idx) {
   if(p.isBot){
     log(`🔑 ${p.name}: ${card.text}`);
     applyGoldenKey(p,idx,card);
-    await wait(800);
+    await wait(1200);
     return;
   }
   await new Promise(resolve=>{
@@ -757,8 +782,8 @@ function nextTurn(){
   while(G.players[G.turnOrder[G.currentIdx]].bankrupt && safety<10){
     G.currentIdx=(G.currentIdx+1)%G.turnOrder.length; safety++;
   }
-  renderPlayerCards(); updateTurnDisplay();
-  setTimeout(()=>startTurn(),500);
+  renderPlayerCards(); updateTurnDisplay(); renderPropPanel();
+  setTimeout(()=>startTurn(),800);
 }
 
 // ===== CONFETTI =====

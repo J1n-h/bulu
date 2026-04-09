@@ -315,7 +315,7 @@ function updateTurnDisplay() {
   }
 }
 
-// ===== MODAL & TOAST =====
+// ===== MODAL =====
 function showModal(title,body,actions) {
   let overlay=$('#modal-overlay');
   if(!overlay){
@@ -332,22 +332,27 @@ function hideModal() {
   if(o) o.classList.remove('active');
 }
 
-function showToast(type, amount, msg) {
-  const toast = document.createElement('div');
-  toast.className = `rent-toast ${type}`;
-  toast.innerHTML = `
-    <div class="toast-icon">${type === 'pay' ? '💸' : '💰'}</div>
-    <div class="toast-amount">₩${fmt(amount)}</div>
-    <div class="toast-msg">${msg}</div>
-  `;
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 2500);
-}
-
 // ===== SCREENS =====
 function showScreen(id) {
   $$('.screen').forEach(s=>s.classList.add('hidden'));
   $(`#${id}`).classList.remove('hidden');
+}
+
+// ===== TOAST =====
+function showToast(type, amount, msg) {
+  const container = $('#toast-container');
+  if(!container) return;
+  const t = document.createElement('div');
+  t.className = `rent-toast ${type}`;
+  const icon = type === 'pay' ? '💸' : '💰';
+  const displayAmt = fmt(amount);
+  t.innerHTML = `
+    <div class="toast-icon">${icon}</div>
+    <div class="toast-amount">${type==='pay'?'-':'+'}₩${displayAmt}</div>
+    <div class="toast-msg">${msg}</div>
+  `;
+  container.appendChild(t);
+  setTimeout(()=>t.remove(), 2500);
 }
 
 // ===== LOBBY =====
@@ -442,6 +447,7 @@ window.jailPay=async function(){
   const idx=G.turnOrder[G.currentIdx]; const p=G.players[idx];
   if(p.money<50000){log('돈이 부족합니다!'); return;}
   p.money-=50000; p.jailTurns=0;
+  if(!p.isBot) showToast('pay', 50000, '무인도 탈출비 지불');
   log('5만원을 내고 무인도를 탈출했습니다!');
   renderPlayerCards(); updateTurnDisplay();
 };
@@ -533,6 +539,7 @@ async function movePlayer(p, idx, steps) {
     if(p.pos===0 && oldPos!==0){
       p.money+=200000;
       log(`💵 ${p.name}이(가) 출발을 지나 20만원을 받았습니다.`);
+      if(!p.isBot && p.pos !== 0) showToast('receive', 200000, '출발지를 지남');
     }
     updateTokens();
     await wait(250);
@@ -555,7 +562,9 @@ async function handleLanding(p, idx) {
       p.jailTurns=3; break;
     case 'welfare':
       log(`💰 ${p.name}이(가) 사회복지기금에 15만원을 기부합니다.`);
-      p.money-=150000; checkBankruptcy(p,idx); break;
+      p.money-=150000;
+      if(!p.isBot) showToast('pay', 150000, '사회복지기금 기부');
+      checkBankruptcy(p,idx); break;
     case 'travel':
       log(`✈️ ${p.name}이(가) 세계여행 칸에 도착. 쉬어갑니다.`);
       break;
@@ -614,7 +623,7 @@ async function handleProperty(p, idx, sq) {
       if(rentAmt>100000){p.cards.splice(freeCard,1);log(`${p.name}이(가) 통행료 면제권을 사용했습니다!`);}
       else payRent(p,idx,prop,rentAmt);
     } else {
-      payRent(p,idx,prop,rentAmt, sq.name);
+      payRent(p,idx,prop,rentAmt);
     }
     // Columbia teleport
     if(sq.type==='columbia'||sq.id===35){
@@ -639,17 +648,14 @@ function doBuild(p,idx,id){
   updateOwners(); renderPlayerCards(); renderPropPanel();
 }
 
-function payRent(p,idx,prop,amt, propName=''){
+function payRent(p,idx,prop,amt){
   const owner=G.players[prop.owner];
   p.money-=amt; owner.money+=amt;
-  log(`💸 ${p.name}이(가) ${owner.name}에게 통행료 ₩${fmt(amt)}을(를) 지불했습니다.`);
   
-  if (!p.isBot) {
-     showToast('pay', amt, `${owner.name}의 ${propName} 통행료 지불`);
-  } else if (!owner.isBot) {
-     showToast('receive', amt, `${p.name}가 내 ${propName}에 방문함`);
-  }
-
+  if(!p.isBot) showToast('pay', amt, `${owner.name}에게 통행료 지불`);
+  if(!owner.isBot) showToast('receive', amt, `${p.name}에게 통행료 획득`);
+  
+  log(`💸 ${p.name}이(가) ${owner.name}에게 통행료 ₩${fmt(amt)}을(를) 지불했습니다.`);
   checkBankruptcy(p,idx);
   renderPlayerCards();
 }
@@ -716,17 +722,31 @@ async function handleGoldenKey(p, idx) {
 
 async function applyGoldenKey(p,idx,card){
   switch(card.effect){
-    case 'gain': p.money+=card.amount; break;
-    case 'pay': p.money-=card.amount; checkBankruptcy(p,idx); break;
-    case 'accident': p.money-=card.amount; p.skipTurns=card.skip; checkBankruptcy(p,idx); break;
+    case 'gain': 
+      p.money+=card.amount; 
+      if(!p.isBot) showToast('receive', card.amount, '황금열쇠 보너스');
+      break;
+    case 'pay': 
+      p.money-=card.amount; 
+      if(!p.isBot) showToast('pay', card.amount, '황금열쇠 벌칙');
+      checkBankruptcy(p,idx); break;
+    case 'accident': 
+      p.money-=card.amount; p.skipTurns=card.skip; 
+      if(!p.isBot) showToast('pay', card.amount, '입원비 지불');
+      checkBankruptcy(p,idx); break;
     case 'repair':
       const bCount=Object.values(G.properties).filter(pr=>pr.owner===idx).reduce((s,pr)=>s+pr.level,0);
       p.money-=bCount*card.perBuilding;
       log(`건물 ${bCount}개 x ₩${fmt(card.perBuilding)} = ₩${fmt(bCount*card.perBuilding)} 지불`);
+      if(!p.isBot && bCount > 0) showToast('pay', bCount*card.perBuilding, '건물 수리비 지불');
       checkBankruptcy(p,idx); break;
     case 'birthday':
       G.players.forEach((op,oi)=>{
-        if(oi!==idx&&!op.bankrupt){ op.money-=card.amount; p.money+=card.amount; }
+        if(oi!==idx&&!op.bankrupt){ 
+          op.money-=card.amount; p.money+=card.amount; 
+          if(!op.isBot) showToast('pay', card.amount, `${p.name}의 생일 축하`);
+          if(!p.isBot) showToast('receive', card.amount * (G.players.filter(x=>!x.bankrupt).length - 1), '생일 축하금 수령');
+        }
       }); break;
     case 'move_back':
       p.pos=(p.pos-card.amount+TOTAL_CELLS)%TOTAL_CELLS;

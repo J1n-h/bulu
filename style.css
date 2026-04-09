@@ -160,62 +160,43 @@ html, body {
   width: min(95vh, 70vw);
   height: min(95vh, 70vw);
   flex-shrink: 0;
-  perspective: 1500px;
 }
 #board {
   display: grid;
   grid-template-columns: 1.4fr repeat(9, 1fr) 1.4fr;
   grid-template-rows: 1.4fr repeat(9, 1fr) 1.4fr;
   width: 100%; height: 100%;
-  gap: 3px;
-  background: #0a0a15;
-  border: 4px solid rgba(60,60,100,0.6);
-  border-radius: var(--radius-lg);
+  gap: 1px;
+  background: var(--bg-board);
+  border: 2px solid var(--border-glass);
+  border-radius: var(--radius-md);
   overflow: hidden;
-  box-shadow: 
-    0 10px 0 #121220, 
-    0 15px 0 #0a0a15,
-    0 25px 40px rgba(0,0,0,0.8),
-    inset 0 2px 10px rgba(255,255,255,0.05);
-  transform: rotateX(20deg) scale(0.98);
-  transform-style: preserve-3d;
-  transition: transform 0.3s ease;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+  transform: perspective(1200px) rotateX(2deg);
+  transform-origin: center center;
 }
 
 /* Board Cells */
 .cell {
   position: relative;
-  background: linear-gradient(145deg, rgba(40,40,75,1), rgba(20,20,45,1));
+  background: var(--bg-cell);
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   padding: 2px;
   font-size: clamp(0.45rem, 0.9vw, 0.7rem);
-  border-radius: 6px;
-  box-shadow: 
-    inset 2px 2px 3px rgba(255,255,255,0.1), 
-    inset -2px -2px 5px rgba(0,0,0,0.6),
-    0 2px 4px rgba(0,0,0,0.3);
-  transition: all 0.2s ease;
+  overflow: hidden;
+  transition: var(--transition);
   cursor: default;
 }
-.cell:hover { 
-  transform: translateZ(5px) translateY(-2px);
-  background: linear-gradient(145deg, rgba(50,50,90,1), rgba(30,30,60,1));
-  box-shadow: 
-    inset 2px 2px 3px rgba(255,255,255,0.15), 
-    inset -2px -2px 5px rgba(0,0,0,0.6),
-    0 8px 15px rgba(0,0,0,0.5);
-  z-index: 10;
-}
+.cell:hover { background: rgba(40, 40, 80, 0.9); z-index: 2; }
 .cell-color-bar {
   position: absolute; width: 100%;
-  height: 6px;
-  box-shadow: inset 0 -2px 4px rgba(0,0,0,0.3);
+  height: 5px;
 }
-.cell-bottom .cell-color-bar { top: 0; border-radius: 6px 6px 0 0; }
-.cell-top .cell-color-bar { bottom: 0; border-radius: 0 0 6px 6px; }
-.cell-left .cell-color-bar { right: 0; width: 6px; height: 100%; border-radius: 0 6px 6px 0; }
-.cell-right .cell-color-bar { left: 0; width: 6px; height: 100%; border-radius: 6px 0 0 6px; }
+.cell-bottom .cell-color-bar { top: 0; }
+.cell-top .cell-color-bar { bottom: 0; }
+.cell-left .cell-color-bar { right: 0; width: 5px; height: 100%; }
+.cell-right .cell-color-bar { left: 0; width: 5px; height: 100%; }
 
 .cell-name {
   font-weight: 600; text-align: center;
@@ -262,23 +243,22 @@ html, body {
 
 /* Player tokens */
 .tokens-container {
-  position: absolute; bottom: 4px; left: 4px;
-  display: flex; flex-wrap: wrap; gap: 4px;
-  transform: translateZ(10px);
+  position: absolute; bottom: 2px; left: 2px;
+  display: flex; flex-wrap: wrap; gap: 2px;
 }
 .player-token {
   width: clamp(14px, 2vw, 22px);
   height: clamp(14px, 2vw, 22px);
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.8);
   font-size: clamp(0.4rem, 0.7vw, 0.6rem);
   display: flex; align-items: center; justify-content: center;
   font-weight: 800; color: #fff;
   text-shadow: 0 1px 3px rgba(0,0,0,0.9);
   transition: all 0.4s ease;
   z-index: 5;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.4);
-  transform: rotateX(-20deg); /* Counter-rotate to stand up relative to board */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5), 0 0 12px currentColor;
+  animation: tokenGlow 2s ease-in-out infinite alternate;
 }
 @keyframes tokenGlow {
   from { box-shadow: 0 2px 8px rgba(0,0,0,0.5), 0 0 8px currentColor; }
